@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import VideoGrid from "./components/VideoGrid";
 import CallControls from "./components/CallControls";
@@ -10,7 +9,6 @@ import { ChatMessage, RemotePeer } from "./types";
 import { formatDuration, copyToClipboard } from "./utils/helpers";
 import { useAppStore } from "./store/appStore";
 import { Sparkles, Info, Clock, ShieldCheck, Activity } from "lucide-react";
-import { getMeetingAssistantAdvice } from "./services/geminiService";
 
 const App: React.FC = () => {
   const {
@@ -62,36 +60,41 @@ const App: React.FC = () => {
     }
   };
 
-  const {
-    initPeer,
-    callPeers,
-    endAllCalls,
-    sendMessageToPeers,
-    callRefs,
-  } = usePeerConnection({
-    onPeerIdGenerated: setPeerId,
-    // Fix: Correctly handle functional updates from hook to interact with Zustand store
-    onRemotePeersUpdate: useCallback((updater: (prev: RemotePeer[]) => RemotePeer[]) => {
-      const currentPeers = useAppStore.getState().remotePeers;
-      const nextPeers = updater(currentPeers);
-      setRemoteIds(nextPeers.map((peer) => peer.id));
-      setRemotePeers(nextPeers);
-    }, [setRemoteIds, setRemotePeers]),
-    onConnectedPeersCountChange: useCallback((updater: (prev: number) => number) => {
-      const currentCount = useAppStore.getState().connectedPeersCount;
-      setConnectedPeersCount(updater(currentCount));
-    }, [setConnectedPeersCount]),
-    onMessageReceived: useCallback((message, senderId) => {
-      const chatMessage: ChatMessage = {
-        id: Date.now().toString(),
-        content: message,
-        sender: 'peer',
-        senderId: senderId,
-        timestamp: new Date()
-      };
-      addMessage(chatMessage);
-    }, [addMessage]),
-  });
+  const { initPeer, callPeers, endAllCalls, sendMessageToPeers, callRefs } =
+    usePeerConnection({
+      onPeerIdGenerated: setPeerId,
+      // Fix: Correctly handle functional updates from hook to interact with Zustand store
+      onRemotePeersUpdate: useCallback(
+        (updater: (prev: RemotePeer[]) => RemotePeer[]) => {
+          const currentPeers = useAppStore.getState().remotePeers;
+          const nextPeers = updater(currentPeers);
+          setRemoteIds(nextPeers.map((peer) => peer.id));
+          setRemotePeers(nextPeers);
+        },
+        [setRemoteIds, setRemotePeers]
+      ),
+      onConnectedPeersCountChange: useCallback(
+        (updater: (prev: number) => number) => {
+          const currentCount = useAppStore.getState().connectedPeersCount;
+          setConnectedPeersCount(updater(currentCount));
+        },
+        [setConnectedPeersCount]
+      ),
+      onMessageReceived: useCallback(
+        (message, senderId) => {
+          const chatMessage: ChatMessage = {
+            id: Date.now().toString(),
+            content: message,
+            sender: "peer",
+            senderId: senderId,
+            timestamp: new Date(),
+          };
+          addMessage(chatMessage);
+        },
+        [addMessage]
+      ),
+      localStream
+    });
 
   useEffect(() => {
     const initialize = async () => {
@@ -129,7 +132,7 @@ const App: React.FC = () => {
       const message: ChatMessage = {
         id: Date.now().toString(),
         content: chatInput,
-        sender: 'self',
+        sender: "self",
         timestamp: new Date(),
       };
       addMessage(message);
@@ -139,17 +142,10 @@ const App: React.FC = () => {
   };
 
   const handleGetAiInsight = async () => {
-    const transcript = messages.slice(-5).map(m => m.content).join(". ");
-    const advice = await getMeetingAssistantAdvice(transcript || "Meeting just started.");
-    if (advice) {
-      addMessage({
-        id: 'ai-' + Date.now(),
-        content: advice,
-        sender: 'peer', // Using peer style for now but marking as AI in the bubble logic
-        senderId: 'GEMINI-AI',
-        timestamp: new Date()
-      });
-    }
+    const transcript = messages
+      .slice(-5)
+      .map((m) => m.content)
+      .join(". ");
   };
 
   return (
@@ -181,12 +177,16 @@ const App: React.FC = () => {
           {duration > 0 && (
             <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
               <Clock className="w-4 h-4 text-blue-400" />
-              <span className="text-sm font-mono font-medium tabular-nums">{formatDuration(duration)}</span>
+              <span className="text-sm font-mono font-medium tabular-nums">
+                {formatDuration(duration)}
+              </span>
             </div>
           )}
-          
+
           <button
-            onClick={() => document.getElementById("info-modal")?.classList.remove("hidden")}
+            onClick={() =>
+              document.getElementById("info-modal")?.classList.remove("hidden")
+            }
             className="p-2 hover:bg-white/10 rounded-full transition-all text-white/40 hover:text-white"
           >
             <Info size={20} />
@@ -229,7 +229,6 @@ const App: React.FC = () => {
               chatInput={chatInput}
               onChatInputChange={setChatInput}
               onSendMessage={handleSendMessage}
-              onGetAiInsight={handleGetAiInsight}
             />
           </div>
         </div>
@@ -263,9 +262,12 @@ const App: React.FC = () => {
           <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-6">
             <Sparkles className="w-8 h-8 text-blue-500" />
           </div>
-          <h3 className="text-3xl font-bold mb-4 tracking-tight">Meeting Intelligence</h3>
+          <h3 className="text-3xl font-bold mb-4 tracking-tight">
+            Meeting Intelligence
+          </h3>
           <p className="text-zinc-400 text-lg leading-relaxed mb-8">
-            Video Pulse leverages P2P WebRTC technology for ultra-low latency communication and Google Gemini for real-time meeting insights.
+            Video Pulse leverages P2P WebRTC technology for ultra-low latency
+            communication and Google Gemini for real-time meeting insights.
           </p>
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
@@ -278,7 +280,9 @@ const App: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => document.getElementById("info-modal")?.classList.add("hidden")}
+            onClick={() =>
+              document.getElementById("info-modal")?.classList.add("hidden")
+            }
             className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-colors"
           >
             Got it, thanks!

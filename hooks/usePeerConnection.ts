@@ -9,13 +9,15 @@ interface UsePeerConnectionProps {
   onRemotePeersUpdate: (updater: (prev: RemotePeer[]) => RemotePeer[]) => void;
   onConnectedPeersCountChange: (updater: (prev: number) => number) => void;
   onMessageReceived: (message: any, senderId: string) => void;
+  localStream: MediaStream | null;
 }
 
 export const usePeerConnection = ({
   onPeerIdGenerated,
   onRemotePeersUpdate,
   onConnectedPeersCountChange,
-  onMessageReceived
+  onMessageReceived,
+  localStream
 }: UsePeerConnectionProps) => {
   const peerRef = useRef<Peer | null>(null);
   const callRefs = useRef<Map<string, MediaConnection>>(new Map());
@@ -75,6 +77,10 @@ export const usePeerConnection = ({
     peer.on('call', (call) => {
       console.log('Incoming call from peer:', call.peer);
       callRefs.current.set(call.peer, call);
+
+      if (localStream) {
+        call.answer(localStream);
+      }
 
       call.on('stream', (remoteStream) => {
         console.log('Remote stream received from:', call.peer);
