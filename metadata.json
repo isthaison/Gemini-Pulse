@@ -1,0 +1,8 @@
+{
+  "name": "Gemini Pulse - Peer Video Calling",
+  "description": "A high-performance video calling application powered by PeerJS for WebRTC connectivity and Gemini AI for intelligent meeting assistance.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
