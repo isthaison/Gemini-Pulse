@@ -6,9 +6,10 @@ interface VideoViewProps {
   isLocal?: boolean;
   className?: string;
   muted?: boolean;
+  volume?: number; // 0 to 1
 }
 
-const VideoView: React.FC<VideoViewProps> = ({ stream, isLocal, className, muted }) => {
+const VideoView: React.FC<VideoViewProps> = ({ stream, isLocal, className, muted, volume = 1 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -16,6 +17,12 @@ const VideoView: React.FC<VideoViewProps> = ({ stream, isLocal, className, muted
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = volume;
+    }
+  }, [volume]);
 
   return (
     <video
