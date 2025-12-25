@@ -1,20 +1,36 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Video Pulse - Peer-to-Peer Video Calling App
 
-# Run and deploy your AI Studio app
+A modern, real-time video calling application built with React, PeerJS, and WebRTC for secure peer-to-peer communication.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/drive/1CHJAcOiUNq7gtmGsHehEUFkYVK-wQRVr
+- **Real-time Video Calling**: High-quality video communication
+- **Screen Sharing**: Share your screen during calls
+- **Text Chat**: Real-time messaging with peers
+- **Audio Controls**: Mute/unmute microphone
+- **Video Controls**: Turn camera on/off
+- **Responsive Design**: Works on desktop and mobile devices
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
-
+**Prerequisites:** Node.js
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+   ```bash
+   npm install
+   ```
+
+2. Run the app:
+   ```bash
+   npm run dev
+   ```
+
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+## Technologies Used
+
+- **React 19** - UI framework
+- **PeerJS** - WebRTC peer-to-peer connections
+- **Tailwind CSS** - Styling
+- **Vite** - Build tool
+- **TypeScript** - Type safety
