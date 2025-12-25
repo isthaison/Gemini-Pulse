@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import Peer, { MediaConnection } from 'peerjs';
+// Fix: Use named imports for Peer and MediaConnection to resolve typing issues with the 'on' method
+import { Peer, MediaConnection } from 'peerjs';
 import VideoView from './components/VideoView';
 import { getMeetingAssistantAdvice } from './services/geminiService';
 import { 
@@ -51,20 +52,26 @@ const App: React.FC = () => {
     };
 
     const initPeer = () => {
+      // Create a new Peer instance
       const peer = new Peer();
       
+      // Register event handlers for the Peer instance
+      // Fix: 'on' method is now correctly recognized via named import
       peer.on('open', (id) => {
         setPeerId(id);
       });
 
+      // Fix: 'on' method is now correctly recognized via named import
       peer.on('call', (call) => {
         // Answer incoming call with current local stream (camera or screen)
+        // We use the ref here to avoid stale closures in the event handler
         const currentStream = localStream || cameraStreamRef.current;
         if (currentStream) {
           call.answer(currentStream);
           callRef.current = call;
           setIsCalling(true);
           
+          // Fix: 'on' method is now correctly recognized via named import
           call.on('stream', (remoteStream) => {
             setRemoteStream(remoteStream);
             setIsConnected(true);
@@ -72,6 +79,7 @@ const App: React.FC = () => {
         }
       });
 
+      // Fix: 'on' method is now correctly recognized via named import
       peer.on('error', (err) => {
         console.error('Peer error:', err);
       });
@@ -89,24 +97,6 @@ const App: React.FC = () => {
   }, []);
 
   // Handlers
-  const startCall = useCallback(() => {
-    const streamToUse = localStream || cameraStreamRef.current;
-    if (!remoteId || !peerRef.current || !streamToUse) return;
-
-    setIsCalling(true);
-    const call = peerRef.current.call(remoteId, streamToUse);
-    callRef.current = call;
-
-    call.on('stream', (remoteStream) => {
-      setRemoteStream(remoteStream);
-      setIsConnected(true);
-    });
-
-    call.on('close', () => {
-      endCall();
-    });
-  }, [remoteId, localStream]);
-
   const endCall = useCallback(() => {
     callRef.current?.close();
     setRemoteStream(null);
@@ -120,6 +110,26 @@ const App: React.FC = () => {
       stopScreenShare();
     }
   }, [isScreenSharing]);
+
+  const startCall = useCallback(() => {
+    const streamToUse = localStream || cameraStreamRef.current;
+    if (!remoteId || !peerRef.current || !streamToUse) return;
+
+    setIsCalling(true);
+    const call = peerRef.current.call(remoteId, streamToUse);
+    callRef.current = call;
+
+    // Fix: 'on' method is now correctly recognized via named import
+    call.on('stream', (remoteStream) => {
+      setRemoteStream(remoteStream);
+      setIsConnected(true);
+    });
+
+    // Fix: 'on' method is now correctly recognized via named import
+    call.on('close', () => {
+      endCall();
+    });
+  }, [remoteId, localStream, endCall]);
 
   const toggleMute = () => {
     if (localStream) {
