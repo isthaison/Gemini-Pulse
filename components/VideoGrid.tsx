@@ -1,6 +1,8 @@
+
 import React from 'react';
 import VideoView from './VideoView';
 import { RemotePeer } from '../types';
+import { User, MicOff, Monitor } from 'lucide-react';
 
 interface VideoGridProps {
   localStream: MediaStream | null;
@@ -9,51 +11,51 @@ interface VideoGridProps {
 }
 
 const VideoGrid: React.FC<VideoGridProps> = ({ localStream, remotePeers = [], isScreenSharing }) => {
-  const totalParticipants = (remotePeers?.length || 0) + 1; // +1 for local
+  const participants = [
+    { id: 'local', stream: localStream, isLocal: true, label: 'You' },
+    ...remotePeers.map(p => ({ ...p, isLocal: false, label: `Peer ${p.id.slice(-4)}` }))
+  ];
 
-  // Calculate grid layout
-  const getGridClass = () => {
-    if (totalParticipants === 1) return 'grid-cols-1';
-    if (totalParticipants === 2) return 'grid-cols-1 md:grid-cols-2';
-    if (totalParticipants <= 4) return 'grid-cols-2';
-    if (totalParticipants <= 6) return 'grid-cols-2 md:grid-cols-3';
-    return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+  const count = participants.length;
+
+  const getGridStyles = () => {
+    if (count === 1) return 'grid-cols-1';
+    if (count === 2) return 'grid-cols-2';
+    if (count <= 4) return 'grid-cols-2 grid-rows-2';
+    return 'grid-cols-2 md:grid-cols-3';
   };
 
   return (
-    <div className={`grid ${getGridClass()} gap-4 h-full`}>
-      {/* Local video */}
-      <div className="relative rounded-2xl overflow-hidden glass border border-white/5 bg-black/40 shadow-xl">
-        {localStream && (
-          <VideoView
-            stream={localStream}
-            isLocal={true}
-            className="w-full h-full object-cover"
-          />
-        )}
-        <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-black/60 text-[10px] font-bold tracking-wider backdrop-blur-md">
-          YOU {isScreenSharing && '(SCREEN)'}
-        </div>
-      </div>
-
-      {/* Remote videos */}
-      {remotePeers.map((peer) => (
-        <div key={peer.id} className="relative rounded-2xl overflow-hidden glass border border-white/5 bg-black/40 shadow-xl">
-          {peer.stream && (
+    <div className={`grid ${getGridStyles()} gap-4 p-4 h-full w-full`}>
+      {participants.map((participant, index) => (
+        <div 
+          key={participant.id + index} 
+          className="relative rounded-3xl overflow-hidden bg-zinc-900 shadow-2xl group transition-transform duration-500"
+        >
+          {participant.stream ? (
             <VideoView
-              stream={peer.stream}
+              stream={participant.stream}
+              isLocal={participant.isLocal}
               className="w-full h-full object-cover"
             />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-zinc-800">
+              <User size={80} strokeWidth={1} />
+            </div>
           )}
-          <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-black/60 text-[10px] font-bold tracking-wider backdrop-blur-md">
-            PEER {peer.id.slice(-4)}
+
+          {/* Participant Label */}
+          <div className="absolute bottom-4 left-4 flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl">
+             <div className={`w-2 h-2 rounded-full ${participant.stream ? 'bg-green-500' : 'bg-red-500'} shadow-[0_0_8px_rgba(34,197,94,0.4)]`}></div>
+             <span className="text-xs font-bold tracking-wide">{participant.label}</span>
+             {participant.isLocal && isScreenSharing && <Monitor size={12} className="text-blue-400" />}
           </div>
-          {!peer.isConnected && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-              <div className="text-center">
-                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-2"></div>
-                <p className="text-xs text-white/70">Connecting...</p>
-              </div>
+
+          {/* Connection Overlay */}
+          {!participant.isLocal && !participant.stream && (
+            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-4">
+               <div className="w-10 h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+               <p className="text-xs font-bold text-white/50 uppercase tracking-widest">Awaiting Signal</p>
             </div>
           )}
         </div>
