@@ -3,7 +3,8 @@ import { Sparkles, X } from "lucide-react";
 import { usePeerStore } from "../store/usePeerStore";
 import { useCallStore } from "../store/useCallStore";
 import { useMessageStore } from "../store/useMessageStore";
-import { useMediaStore } from "../store/useMediaStore";
+import { useCameraStore } from "../store/useCameraStore";
+import { useMicrophoneStore } from "../store/useMicrophoneStore";
 
 interface InfoModalProps {
   isVisible: boolean;
@@ -13,7 +14,7 @@ interface InfoModalProps {
 const InfoModal: React.FC<InfoModalProps> = ({ isVisible, onClose }) => {
   if (!isVisible) return null;
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-100 flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
       <div className="bg-zinc-900 border border-white/10 rounded-2xl md:rounded-[2.5rem] p-6 md:p-10 max-w-lg w-full shadow-2xl">
         <div className="w-12 h-12 md:w-16 md:h-16 bg-blue-600/10 rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6">
           <Sparkles className="w-6 h-6 md:w-8 md:h-8 text-blue-500" />
@@ -60,7 +61,7 @@ const DiagnosticsModal: React.FC<DiagnosticsModalProps> = ({
   const { messages } = useMessageStore();
   if (!isVisible) return null;
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-100 flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
       <div className="bg-zinc-900 border border-white/10 rounded-2xl md:rounded-[2.5rem] p-6 md:p-10 max-w-2xl w-full shadow-2xl max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -178,16 +179,22 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
 }) => {
   const { pendingIncomingCall, acceptIncomingCall, rejectIncomingCall } =
     useCallStore();
-  const { localStream } = useMediaStore();
+  const { localVideoStream } = useCameraStore();
+  const { localAudioStream } = useMicrophoneStore();
 
   const handleAccept = async () => {
     if (!pendingIncomingCall) return;
-    if (!localStream) {
+    if (!localVideoStream && !localAudioStream) {
       console.warn("No local stream to accept call");
       return;
     }
     try {
-      await acceptIncomingCall(pendingIncomingCall, localStream);
+      // Create combined stream for call
+      const combinedStream = new MediaStream([
+        ...(localVideoStream?.getVideoTracks() || []),
+        ...(localAudioStream?.getAudioTracks() || []),
+      ]);
+      await acceptIncomingCall(pendingIncomingCall, combinedStream);
       onAccept();
     } catch (err) {
       console.error("Error accepting incoming call", err);
@@ -201,7 +208,7 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
   };
   if (!pendingIncomingCall) return null;
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-200 flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
         <h4 className="text-lg font-bold mb-2">Incoming Call</h4>
         <p className="text-sm text-zinc-400 mb-4">

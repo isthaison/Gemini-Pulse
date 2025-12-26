@@ -3,12 +3,10 @@ import VideoGrid from "./components/VideoGrid";
 import CallControls from "./components/CallControls";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
-import {
-  InfoModal,
-  DiagnosticsModal,
-  IncomingCallModal,
-} from "./components/Modals";
-import { useMediaStore } from "./store/useMediaStore";
+import Modal from "./components/Modal";
+import { useCameraStore } from "./store/useCameraStore";
+import { useMicrophoneStore } from "./store/useMicrophoneStore";
+import { useModalStore } from "./store/useModalStore";
 import { ChatMessage } from "./types";
 import { formatDuration, copyToClipboard } from "./utils/helpers";
 import { usePeerStore } from "./store/usePeerStore";
@@ -61,22 +59,23 @@ const App: React.FC = () => {
 
   const { duration, incrementDuration, resetDuration } = useUIStore();
 
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
-  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const { openModal } = useModalStore();
 
-  const {
-    localStream,
-    initMedia,
-    cleanup,
-  } = useMediaStore();
+  const [showSidebar, setShowSidebar] = useState(false);
+
+  const { initCamera, cleanupCamera, localVideoStream } = useCameraStore();
+  const { initMicrophone, cleanupMicrophone, localAudioStream } =
+    useMicrophoneStore();
 
   useEffect(() => {
     const initialize = async () => {
-      await initMedia();
+      await Promise.all([initCamera(), initMicrophone()]);
     };
     initialize();
-    return () => cleanup();
+    return () => {
+      cleanupCamera();
+      cleanupMicrophone();
+    };
   }, []);
 
   useEffect(() => {
@@ -90,8 +89,13 @@ const App: React.FC = () => {
     if (pendingIncomingCall) {
       // flash sidebar for visibility
       setShowSidebar(true);
+      // Open incoming call modal
+      openModal("incoming-call");
+    } else {
+      // Close modal if no pending call
+      // Note: Modal will auto-close via closeModal() in accept/reject handlers
     }
-  }, [pendingIncomingCall]);
+  }, [pendingIncomingCall, openModal]);
 
   // Auto-join room if `?room=` present in URL after peer is ready
   useEffect(() => {
@@ -99,16 +103,28 @@ const App: React.FC = () => {
     const room = params.get("room");
     if (room && peerId && room !== peerId) {
       setRemoteIds([room]);
-      if (localStream) {
+      if (localVideoStream || localAudioStream) {
         setIsCalling(true);
         try {
-          callPeers([room], localStream);
+          // Create combined stream for call
+          const combinedStream = new MediaStream([
+            ...(localVideoStream?.getVideoTracks() || []),
+            ...(localAudioStream?.getAudioTracks() || []),
+          ]);
+          callPeers([room], combinedStream);
         } catch (err) {
           console.error("Auto call error", err);
         }
       }
     }
-  }, [peerId, localStream, setRemoteIds, callPeers, setIsCalling]);
+  }, [
+    peerId,
+    localVideoStream,
+    localAudioStream,
+    setRemoteIds,
+    callPeers,
+    setIsCalling,
+  ]);
 
   useEffect(() => {
     let interval: any;
@@ -184,8 +200,8 @@ const App: React.FC = () => {
       {/* Modern Header */}
       <Header
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
-        onShowInfo={() => setShowInfo(true)}
-        onShowDiagnostics={() => setShowDiagnostics(true)}
+        onShowInfo={() => openModal("info")}
+        onShowDiagnostics={() => openModal("diagnostics")}
       />
 
       {/* Main Grid Layout */}
@@ -196,7 +212,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Right: Sidebar Interaction - Desktop */}
-        <div className="hidden md:flex w-[400px]">
+        <div className="hidden md:flex w-100">
           <Sidebar />
         </div>
       </main>
@@ -223,13 +239,7 @@ const App: React.FC = () => {
 
       {/* Nickname removed: using default/random peer id */}
 
-      <DiagnosticsModal
-        isVisible={showDiagnostics}
-        onClose={() => setShowDiagnostics(false)}
-      />
-
-      <InfoModal isVisible={showInfo} onClose={() => setShowInfo(false)} />
-      <IncomingCallModal />
+      <Modal />
     </div>
   );
 };
