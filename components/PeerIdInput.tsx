@@ -62,7 +62,7 @@ const PeerIdInput: React.FC = () => {
             onChange={(e) => setNewPeerId(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Enter peer ID..."
-            className="flex-1 bg-white/4 border border-white/5 rounded-xl md:rounded-2xl px-3 md:px-5 py-2.5 md:py-3.5 text-xs md:text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-blue-500/40 focus:bg-white/[0.08] transition-all"
+            className="flex-1 bg-white/4 border border-white/5 rounded-xl md:rounded-2xl px-3 md:px-5 py-2.5 md:py-3.5 text-xs md:text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-blue-500/40 focus:bg-white/8 transition-all"
           />
           <button
             onClick={handleAdd}
