@@ -37,7 +37,7 @@ const CallStatusControls: React.FC = () => {
   };
 
   const btnBaseClass =
-    "p-2 md:p-4 rounded-lg md:rounded-[1.25rem] transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
+    "p-1.5 md:p-3 rounded-lg md:rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
 
   return (
     <>
@@ -55,9 +55,9 @@ const CallStatusControls: React.FC = () => {
       <div className="w-px h-3 md:h-10 bg-white/10 mx-0.5 md:mx-2" />
 
       {/* Signaling status */}
-      <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/3 border border-white/5">
+      <div className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/3 border border-white/5">
         <span
-          className={`w-2 h-2 rounded-full ${
+          className={`w-1.5 h-1.5 rounded-full ${
             signalingState === "ready"
               ? "bg-green-400"
               : signalingState === "disconnected"
@@ -68,25 +68,25 @@ const CallStatusControls: React.FC = () => {
           }`}
           title={`Signaling: ${signalingState}`}
         ></span>
-        <span className="text-[10px] text-white/70 uppercase tracking-wide">
+        <span className="text-[9px] text-white/70 uppercase tracking-wide">
           {signalingState}
         </span>
         <button
           onClick={reconnectPeer}
           title="Reconnect"
-          className="p-1 ml-1 bg-white/5 rounded-md hover:bg-white/10"
+          className="p-1 bg-white/5 rounded-md hover:bg-white/10"
         >
-          <RefreshCw size={14} />
+          <RefreshCw size={12} />
         </button>
       </div>
 
       {connectedPeersCount > 0 || isCalling ? (
         <button
           onClick={handleEndCall}
-          className="p-2 md:p-4 bg-red-600 hover:bg-red-500 text-white rounded-lg md:rounded-[1.25rem] shadow-xl shadow-red-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-1 md:gap-4 px-3 md:px-10 group pointer-events-auto"
+          className="p-1.5 md:p-3 bg-red-600 hover:bg-red-500 text-white rounded-lg md:rounded-xl shadow-xl shadow-red-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-1 md:gap-3 px-2 md:px-8 group pointer-events-auto"
         >
-          <PhoneOff size={16} className="md:w-5 md:h-5" />
-          <span className="font-black text-xs md:text-sm uppercase tracking-widest">
+          <PhoneOff size={14} className="md:w-4 md:h-4" />
+          <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">
             End Call
           </span>
         </button>
@@ -94,10 +94,10 @@ const CallStatusControls: React.FC = () => {
         <button
           disabled={remoteIds.length === 0}
           onClick={handleCall}
-          className="p-2 md:p-4 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-lg md:rounded-[1.25rem] shadow-xl shadow-blue-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-1 md:gap-4 px-6 md:px-12 group pointer-events-auto"
+          className="p-1.5 md:p-3 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-lg md:rounded-xl shadow-xl shadow-blue-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-1 md:gap-3 px-3 md:px-8 group pointer-events-auto"
         >
-          <Phone size={16} className="md:w-5 md:h-5" />
-          <span className="font-black text-xs md:text-sm uppercase tracking-widest">
+          <Phone size={14} className="md:w-4 md:h-4" />
+          <span className="font-black text-[10px] md:text-xs uppercase tracking-widest">
             Initiate
           </span>
         </button>

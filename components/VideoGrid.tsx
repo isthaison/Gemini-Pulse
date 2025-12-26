@@ -29,12 +29,12 @@ const VideoGrid: React.FC = () => {
 
   return (
     <div
-      className={`grid ${getGridStyles()} gap-2 md:gap-4 p-2 md:p-4 h-full w-full`}
+      className={`grid ${getGridStyles()} gap-2 p-2 h-full w-full`}
     >
       {participants.map((participant, index) => (
         <div
           key={participant.id + index}
-          className="relative rounded-3xl overflow-hidden bg-zinc-900 shadow-2xl group transition-transform duration-500"
+          className="relative rounded-2xl overflow-hidden bg-zinc-900 shadow-xl group transition-transform duration-300"
         >
           {participant.stream ? (
             <VideoView
@@ -49,25 +49,25 @@ const VideoGrid: React.FC = () => {
           )}
 
           {/* Participant Label */}
-          <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-black/40 backdrop-blur-xl border border-white/10 rounded-lg md:rounded-xl">
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-sm border border-white/20 rounded-lg">
             <div
-              className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${
+              className={`w-1.5 h-1.5 rounded-full ${
                 participant.stream ? "bg-green-500" : "bg-red-500"
-              } shadow-[0_0_8px_rgba(34,197,94,0.4)]`}
+              } shadow-[0_0_6px_rgba(34,197,94,0.4)]`}
             ></div>
-            <span className="text-[10px] md:text-xs font-bold tracking-wide">
+            <span className="text-[10px] font-bold tracking-wide">
               {participant.label}
             </span>
             {participant.isLocal && isScreenSharing && (
-              <Monitor size={10} className="md:w-4 md:h-4 text-blue-400" />
+              <Monitor size={10} className="w-3 h-3 text-blue-400" />
             )}
           </div>
 
           {/* Connection Overlay */}
           {!participant.isLocal && !participant.stream && (
-            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 md:gap-4">
-              <div className="w-8 h-8 md:w-10 md:h-10 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-              <p className="text-[10px] md:text-xs font-bold text-white/50 uppercase tracking-widest">
+            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
+              <div className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+              <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest">
                 Awaiting Signal
               </p>
             </div>

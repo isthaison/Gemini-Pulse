@@ -11,16 +11,17 @@ const ScreenShareControls: React.FC = () => {
   const { remotePeers } = useCallStore();
 
   const btnBaseClass =
-    "p-2 md:p-4 rounded-lg md:rounded-[1.25rem] transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
+    "p-1.5 md:p-3 rounded-lg md:rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
 
   const handleToggleScreenShare = () => {
     // Check if there are any active calls
     const hasActiveCalls = remotePeers.length > 0;
-    
+
     if (!hasActiveCalls) {
       useMessageStore.getState().addMessage({
         id: Date.now().toString(),
-        content: "Cannot share screen: No active calls. Connect to a peer first.",
+        content:
+          "Cannot share screen: No active calls. Connect to a peer first.",
         sender: "system",
         senderId: "system",
         timestamp: new Date(),
@@ -51,16 +52,8 @@ const ScreenShareControls: React.FC = () => {
       {/* Screen sharing indicator */}
       {isScreenSharing && (
         <div className="flex items-center gap-1">
-          <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-          <span className="text-xs text-blue-400 font-medium">SHARING</span>
-        </div>
-      )}
-
-      {/* No active calls indicator */}
-      {remotePeers.length === 0 && !isScreenSharing && (
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-          <span className="text-xs text-gray-400 font-medium">NO CALLS</span>
+          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+          <span className="text-[10px] text-blue-400 font-medium">SHARING</span>
         </div>
       )}
     </div>

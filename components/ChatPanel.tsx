@@ -1,12 +1,14 @@
 import React, { useRef, useEffect } from "react";
-import { Sparkles, Send, Clock, Bot } from "lucide-react";
+import { Sparkles, Send, Clock, Bot, Mic, Activity } from "lucide-react";
 import { ChatMessage } from "../types";
 import { useMessageStore } from "../store/useMessageStore";
 import { useChatStore } from "../store/useChatStore";
+import { useMicrophoneStore } from "../store/useMicrophoneStore";
 
 const ChatPanel: React.FC = () => {
   const { messages } = useMessageStore();
   const { chatInput, setChatInput, sendMessageToPeers } = useChatStore();
+  const { isTestingMic, micLevelSmoothed, startMicTest, stopMicTest } = useMicrophoneStore();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -36,14 +38,45 @@ const ChatPanel: React.FC = () => {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-4 md:px-6 py-3 md:py-5 border-b border-white/5 bg-white/3">
-        <div className="flex items-center gap-2 md:gap-2.5">
-          <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-            <Sparkles size={12} className="md:w-4 md:h-4 text-blue-400" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 md:gap-2.5">
+            <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <Sparkles size={12} className="md:w-4 md:h-4 text-blue-400" />
+            </div>
+            <h3 className="text-xs md:text-sm font-black uppercase tracking-widest text-white/90">
+              Interaction
+            </h3>
           </div>
-          <h3 className="text-xs md:text-sm font-black uppercase tracking-widest text-white/90">
-            Interaction
-          </h3>
+          
+          {/* Quick Mic Test Button */}
+          <button
+            onClick={isTestingMic ? stopMicTest : startMicTest}
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
+              isTestingMic
+                ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                : "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+            }`}
+            title="Quick Mic Test"
+          >
+            <Mic size={12} />
+            {isTestingMic ? "ON" : "TEST"}
+          </button>
         </div>
+
+        {/* Mic Level Indicator */}
+        {isTestingMic && (
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500 transition-all duration-100"
+                style={{ width: `${Math.min(micLevelSmoothed * 100, 100)}%` }}
+              />
+            </div>
+            <span className="text-[9px] text-green-400 font-mono">
+              {Math.round(micLevelSmoothed * 100)}%
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Messages */}

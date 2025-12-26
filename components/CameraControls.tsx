@@ -6,7 +6,7 @@ const CameraControls: React.FC = () => {
   const { isCameraOff, toggleCamera } = useCameraStore();
 
   const btnBaseClass =
-    "p-2 md:p-4 rounded-lg md:rounded-[1.25rem] transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
+    "p-1.5 md:p-3 rounded-lg md:rounded-xl transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -25,8 +25,8 @@ const CameraControls: React.FC = () => {
       {/* Camera off indicator */}
       {isCameraOff && (
         <div className="flex items-center gap-1">
-          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-          <span className="text-xs text-red-400 font-medium">CAM OFF</span>
+          <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+          <span className="text-[10px] text-red-400 font-medium">CAM OFF</span>
         </div>
       )}
     </div>

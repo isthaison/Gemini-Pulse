@@ -32,20 +32,20 @@ const DeviceSettingsModal: React.FC = () => {
   };
 
   return (
-    <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold">Device Settings</h3>
+    <div className="bg-zinc-900 border border-white/10 rounded-xl p-4 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold">Device Settings</h3>
         <button
           onClick={closeModal}
-          className="p-2 hover:bg-white/10 rounded-full"
+          className="p-1.5 hover:bg-white/10 rounded-full"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <label className="block text-sm font-medium mb-2">Microphone</label>
+          <label className="block text-xs font-medium mb-1">Microphone</label>
           <CustomSelect
             options={availableAudioDevices.map((device) => ({
               value: device.deviceId,
@@ -58,7 +58,7 @@ const DeviceSettingsModal: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Camera</label>
+          <label className="block text-xs font-medium mb-1">Camera</label>
           <CustomSelect
             options={availableVideoDevices.map((device) => ({
               value: device.deviceId,
@@ -71,26 +71,26 @@ const DeviceSettingsModal: React.FC = () => {
         </div>
 
         {/* Microphone Test Section */}
-        <div className="border-t border-white/10 pt-4">
-          <div className="flex items-center justify-between mb-3">
-            <label className="block text-sm font-medium">Test Microphone</label>
+        <div className="border-t border-white/10 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-xs font-medium">Test Microphone</label>
             <button
               onClick={isTestingMic ? stopMicTest : startMicTest}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-medium transition-colors ${
                 isTestingMic
                   ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
                   : "bg-green-500/20 text-green-400 hover:bg-green-500/30"
               }`}
             >
-              {isTestingMic ? <MicOff size={14} /> : <Activity size={14} />}
-              {isTestingMic ? "Stop Test" : "Start Test"}
+              {isTestingMic ? <MicOff size={12} /> : <Activity size={12} />}
+              {isTestingMic ? "Stop" : "Start"}
             </button>
           </div>
 
           {/* Mic Level Visualization */}
           <div className="space-y-2">
             {/* Waveform bars */}
-            <div className="flex items-end gap-0.5 h-8">
+            <div className="flex items-end gap-0.5 h-6">
               {[0.2, 0.4, 0.6, 0.8, 1.0, 0.8, 0.6, 0.4, 0.2].map(
                 (multiplier, index) => {
                   const height = Math.min(micLevelSmoothed * multiplier * 100, 100);
@@ -113,7 +113,7 @@ const DeviceSettingsModal: React.FC = () => {
             </div>
 
             {/* Status and Quality Info */}
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-[10px]">
               <div className={`font-mono ${
                 isTestingMic
                   ? "text-green-400"
@@ -132,19 +132,19 @@ const DeviceSettingsModal: React.FC = () => {
                 {audioQuality.voiceActivityDetected && (
                   <div className="flex items-center gap-1 text-green-400">
                     <Activity size={10} />
-                    <span className="text-xs">VOICE</span>
+                    <span className="text-[10px]">VOICE</span>
                   </div>
                 )}
                 {audioQuality.clippingDetected && (
                   <div className="flex items-center gap-1 text-red-400">
                     <MicOff size={10} />
-                    <span className="text-xs">CLIP</span>
+                    <span className="text-[10px]">CLIP</span>
                   </div>
                 )}
                 {audioQuality.lowLevelDetected && (
                   <div className="flex items-center gap-1 text-yellow-400">
                     <Mic size={10} />
-                    <span className="text-xs">LOW</span>
+                    <span className="text-[10px]">LOW</span>
                   </div>
                 )}
               </div>
@@ -152,23 +152,23 @@ const DeviceSettingsModal: React.FC = () => {
 
             {/* SNR Display */}
             {isTestingMic && (
-              <div className="text-xs font-mono text-white/40">
+              <div className="text-[10px] font-mono text-white/40">
                 SNR: {audioQuality.signalToNoiseRatio.toFixed(1)}dB
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-2 pt-3">
           <button
             onClick={handleRefreshDevices}
-            className="flex-1 py-3 bg-white/10 hover:bg-white/20 rounded-xl text-white font-medium"
+            className="flex-1 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white font-medium text-sm"
           >
             Refresh Devices
           </button>
           <button
             onClick={closeModal}
-            className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-medium"
+            className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium text-sm"
           >
             Done
           </button>

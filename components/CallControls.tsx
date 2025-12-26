@@ -31,11 +31,13 @@ const CallControls: React.FC = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 md:bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-0.5 md:gap-4 px-2 md:px-8 py-1.5 md:py-5 rounded-lg md:rounded-[2.5rem] bg-black/40 backdrop-blur-2xl border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] z-100 transition-transform hover:scale-[1.02] max-w-[85vw] overflow-x-auto">
+      <div className="fixed bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2 py-2.5 rounded-xl bg-black/60 backdrop-blur-xl border border-white/20 shadow-[0_15px_30px_-10px_rgba(0,0,0,0.6)] z-100 max-w-[95vw] overflow-x-auto">
         <MicrophoneControls />
         <CameraControls />
         <ScreenShareControls />
+        <div className="hidden md:block w-px h-8 bg-white/10 mx-1" />
         <VolumeControls />
+        <div className="hidden md:block w-px h-8 bg-white/10 mx-1" />
         <CallStatusControls />
       </div>
     </>
