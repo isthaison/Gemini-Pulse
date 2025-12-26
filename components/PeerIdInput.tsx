@@ -1,31 +1,28 @@
 
 import React, { useState } from 'react';
 import { Plus, X, Copy, UserPlus } from 'lucide-react';
+import { useCallStore } from '../store/useCallStore';
+import { usePeerStore } from '../store/usePeerStore';
+import { useChatStore } from '../store/useChatStore';
+import { copyToClipboard } from '../utils/helpers';
 
-interface PeerIdInputProps {
-  remoteIds: string[];
-  onRemoteIdsChange: (ids: string[]) => void;
-  peerId: string;
-  copyFeedback: boolean;
-  onCopyPeerId: () => void;
-  onAddPeerId: (id: string) => void;
-  onRemovePeerId: (id: string) => void;
-}
-
-const PeerIdInput: React.FC<PeerIdInputProps> = ({
-  remoteIds,
-  onRemoteIdsChange,
-  peerId,
-  copyFeedback,
-  onCopyPeerId,
-  onAddPeerId,
-  onRemovePeerId
-}) => {
+const PeerIdInput: React.FC = () => {
+  const { remoteIds, addRemoteId, removeRemoteId } = useCallStore();
+  const { peerId } = usePeerStore();
+  const { copyFeedback, setCopyFeedback } = useChatStore();
   const [newPeerId, setNewPeerId] = useState('');
+
+  const handleCopyPeerId = async () => {
+    const success = await copyToClipboard(peerId);
+    if (success) {
+      setCopyFeedback(true);
+      setTimeout(() => setCopyFeedback(false), 2000);
+    }
+  };
 
   const handleAdd = () => {
     if (newPeerId.trim()) {
-      onAddPeerId(newPeerId.trim());
+      addRemoteId(newPeerId.trim());
       setNewPeerId('');
     }
   };
@@ -46,7 +43,7 @@ const PeerIdInput: React.FC<PeerIdInputProps> = ({
         </div>
         <div className="flex items-center gap-2">
           <code className="flex-1 text-[10px] md:text-xs text-zinc-400 font-mono">{peerId || '...'}</code>
-          <button onClick={onCopyPeerId} className="p-2 bg-white/5 rounded-lg">
+          <button onClick={handleCopyPeerId} className="p-2 bg-white/5 rounded-lg">
             <Copy size={14} />
           </button>
         </div>
@@ -89,7 +86,7 @@ const PeerIdInput: React.FC<PeerIdInputProps> = ({
               <div key={id} className="flex items-center justify-between bg-white/[0.02] hover:bg-white/[0.04] px-3 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl border border-white/5 group transition-colors">
                 <code className="text-[10px] md:text-xs text-zinc-400 font-mono group-hover:text-blue-400/80 transition-colors">{id}</code>
                 <button
-                  onClick={() => onRemovePeerId(id)}
+                  onClick={() => removeRemoteId(id)}
                   className="p-1 hover:bg-red-500/10 text-white/10 hover:text-red-500 transition-all rounded-lg"
                 >
                   <X size={12} className="md:w-3.5 md:h-3.5" />

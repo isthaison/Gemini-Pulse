@@ -2,25 +2,36 @@
 import React, { useRef, useEffect } from 'react';
 import { Sparkles, Send, Clock, Bot } from 'lucide-react';
 import { ChatMessage } from '../types';
+import { useMessageStore } from '../store/useMessageStore';
+import { useChatStore } from '../store/useChatStore';
 
-interface ChatPanelProps {
-  messages: ChatMessage[];
-  chatInput: string;
-  onChatInputChange: (value: string) => void;
-  onSendMessage: (e?: React.FormEvent) => void;
-}
-
-const ChatPanel: React.FC<ChatPanelProps> = ({
-  messages,
-  chatInput,
-  onChatInputChange,
-  onSendMessage
-}) => {
+const ChatPanel: React.FC = () => {
+  const { messages } = useMessageStore();
+  const { chatInput, setChatInput, sendMessageToPeers } = useChatStore();
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleSendMessage = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (chatInput.trim()) {
+      const message: ChatMessage = {
+        id: Date.now().toString(),
+        content: chatInput,
+        sender: "self",
+        timestamp: new Date(),
+      };
+      // Add message to local store
+      const { addMessage } = useMessageStore.getState();
+      addMessage(message);
+      // Send to peers
+      sendMessageToPeers(chatInput);
+      // Clear input
+      setChatInput("");
+    }
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -79,11 +90,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
       {/* Input */}
       <div className="p-4 md:p-6 bg-white/[0.01] border-t border-white/5">
-        <form onSubmit={onSendMessage} className="flex items-center gap-2 md:gap-3">
+        <form onSubmit={handleSendMessage} className="flex items-center gap-2 md:gap-3">
           <input
             type="text"
             value={chatInput}
-            onChange={(e) => onChatInputChange(e.target.value)}
+            onChange={(e) => setChatInput(e.target.value)}
             placeholder="Broadcast a message..."
             className="flex-1 bg-white/[0.05] border border-white/10 rounded-xl md:rounded-2xl px-3 md:px-5 py-2.5 md:py-3.5 text-xs md:text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all"
           />

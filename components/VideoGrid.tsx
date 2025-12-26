@@ -2,18 +2,13 @@ import React from "react";
 import VideoView from "./VideoView";
 import { RemotePeer } from "../types";
 import { User, MicOff, Monitor } from "lucide-react";
+import { useMediaStore } from "../store/useMediaStore";
+import { useCallStore } from "../store/useCallStore";
 
-interface VideoGridProps {
-  localStream: MediaStream | null;
-  remotePeers: RemotePeer[];
-  isScreenSharing: boolean;
-}
+const VideoGrid: React.FC = () => {
+  const { localStream, isScreenSharing } = useMediaStore();
+  const { remotePeers } = useCallStore();
 
-const VideoGrid: React.FC<VideoGridProps> = ({
-  localStream,
-  remotePeers = [],
-  isScreenSharing,
-}) => {
   const participants = [
     { id: "local", stream: localStream, isLocal: true, label: "You" },
     ...remotePeers.map((p) => ({

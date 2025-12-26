@@ -14,7 +14,10 @@ const VideoView: React.FC<VideoViewProps> = ({ stream, isLocal, className, muted
 
   useEffect(() => {
     if (videoRef.current && stream) {
+      console.log('VideoView: Setting stream', stream.id, stream.getTracks());
       videoRef.current.srcObject = stream;
+    } else {
+      console.log('VideoView: No stream or video element', { stream, videoRef: videoRef.current });
     }
   }, [stream]);
 

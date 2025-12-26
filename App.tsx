@@ -3,8 +3,12 @@ import VideoGrid from "./components/VideoGrid";
 import CallControls from "./components/CallControls";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
-import { InfoModal, DiagnosticsModal, IncomingCallModal } from "./components/Modals";
-import { useMediaStream } from "./hooks/useMediaStream";
+import {
+  InfoModal,
+  DiagnosticsModal,
+  IncomingCallModal,
+} from "./components/Modals";
+import { useMediaStore } from "./store/useMediaStore";
 import { ChatMessage } from "./types";
 import { formatDuration, copyToClipboard } from "./utils/helpers";
 import { usePeerStore } from "./store/usePeerStore";
@@ -24,13 +28,8 @@ import {
 } from "lucide-react";
 
 const App: React.FC = () => {
-  const {
-    peerId,
-    signalingState,
-    initPeer,
-    reconnectPeer,
-    callRefs,
-  } = usePeerStore();
+  const { peerId, signalingState, initPeer, reconnectPeer, callRefs } =
+    usePeerStore();
 
   const {
     remoteIds,
@@ -48,10 +47,7 @@ const App: React.FC = () => {
     setIsCalling,
   } = useCallStore();
 
-  const {
-    messages,
-    addMessage,
-  } = useMessageStore();
+  const { messages, addMessage } = useMessageStore();
 
   const {
     chatInput,
@@ -61,15 +57,9 @@ const App: React.FC = () => {
     sendMessageToPeers,
   } = useChatStore();
 
-  const {
-    createRoom,
-  } = useRoomStore();
+  const { createRoom } = useRoomStore();
 
-  const {
-    duration,
-    incrementDuration,
-    resetDuration,
-  } = useUIStore();
+  const { duration, incrementDuration, resetDuration } = useUIStore();
 
   const [showSidebar, setShowSidebar] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -77,33 +67,16 @@ const App: React.FC = () => {
 
   const {
     localStream,
-    isMuted,
-    isCameraOff,
-    isScreenSharing,
-    remoteVolume,
     initMedia,
-    toggleMute,
-    toggleCamera,
-    toggleScreenShare,
-    setRemoteVolume,
-    cleanup: cleanupMedia,
-  } = useMediaStream();
-
-  // Fix: Implement missing handleCopyPeerId
-  const handleCopyPeerId = async () => {
-    const success = await copyToClipboard(peerId);
-    if (success) {
-      setCopyFeedback(true);
-      setTimeout(() => setCopyFeedback(false), 2000);
-    }
-  };
+    cleanup,
+  } = useMediaStore();
 
   useEffect(() => {
     const initialize = async () => {
       await initMedia();
     };
     initialize();
-    return () => cleanupMedia();
+    return () => cleanup();
   }, []);
 
   useEffect(() => {
@@ -157,13 +130,13 @@ const App: React.FC = () => {
   const handleAcceptIncoming = async () => {
     if (!pendingIncomingCall) return;
     if (!localStream) {
-      console.warn('No local stream to accept call');
+      console.warn("No local stream to accept call");
       return;
     }
     try {
       await acceptIncomingCall(pendingIncomingCall, localStream);
     } catch (err) {
-      console.error('Error accepting incoming call', err);
+      console.error("Error accepting incoming call", err);
     }
   };
 
@@ -200,8 +173,6 @@ const App: React.FC = () => {
       .join(". ");
   };
 
-
-
   return (
     <div className="h-screen w-full bg-[#050505] text-white flex flex-col overflow-hidden font-sans selection:bg-blue-500/30">
       {/* Dynamic Background */}
@@ -215,38 +186,18 @@ const App: React.FC = () => {
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
         onShowInfo={() => setShowInfo(true)}
         onShowDiagnostics={() => setShowDiagnostics(true)}
-        duration={duration}
-        peerId={peerId}
-        createRoom={createRoom}
-        addMessage={addMessage}
       />
 
       {/* Main Grid Layout */}
       <main className="flex-1 flex flex-col md:flex-row p-4 md:p-6 gap-4 md:gap-6 overflow-hidden relative z-10">
         {/* Left: Video Stage */}
         <div className="flex-1 flex flex-col gap-4 md:gap-6 h-full min-h-0">
-          <VideoGrid
-            localStream={localStream}
-            remotePeers={remotePeers}
-            isScreenSharing={isScreenSharing}
-          />
+          <VideoGrid />
         </div>
 
         {/* Right: Sidebar Interaction - Desktop */}
         <div className="hidden md:flex w-[400px]">
-          <Sidebar
-            peerId={peerId}
-            remoteIds={remoteIds}
-            messages={messages}
-            chatInput={chatInput}
-            copyFeedback={copyFeedback}
-            onRemoteIdsChange={setRemoteIds}
-            onAddPeerId={addRemoteId}
-            onRemovePeerId={removeRemoteId}
-            onCopyPeerId={handleCopyPeerId}
-            onChatInputChange={setChatInput}
-            onSendMessage={handleSendMessage}
-          />
+          <Sidebar />
         </div>
       </main>
 
@@ -261,41 +212,13 @@ const App: React.FC = () => {
           <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
         </div>
         <div className="max-h-[65vh] overflow-y-auto px-4 pb-4">
-          <Sidebar
-            peerId={peerId}
-            remoteIds={remoteIds}
-            messages={messages}
-            chatInput={chatInput}
-            copyFeedback={copyFeedback}
-            onRemoteIdsChange={setRemoteIds}
-            onAddPeerId={addRemoteId}
-            onRemovePeerId={removeRemoteId}
-            onCopyPeerId={handleCopyPeerId}
-            onChatInputChange={setChatInput}
-            onSendMessage={handleSendMessage}
-          />
+          <Sidebar />
         </div>
       </div>
 
       {/* Universal Controls Bar */}
       <footer className="relative z-50 py-4 md:py-8 px-4 md:px-0 pointer-events-none">
-        <CallControls
-          isCalling={isCalling}
-          connectedPeersCount={connectedPeersCount}
-          isMuted={isMuted}
-          isCameraOff={isCameraOff}
-          isScreenSharing={isScreenSharing}
-          remoteVolume={remoteVolume}
-          remoteIds={remoteIds}
-          onCall={handleCall}
-          onEndCall={handleEndCall}
-          onToggleMute={toggleMute}
-          onToggleCamera={toggleCamera}
-          onToggleScreenShare={() => toggleScreenShare(callRefs)}
-          onVolumeChange={setRemoteVolume}
-          signalingState={signalingState}
-          onReconnect={() => reconnectPeer()}
-        />
+        <CallControls />
       </footer>
 
       {/* Nickname removed: using default/random peer id */}
@@ -303,22 +226,10 @@ const App: React.FC = () => {
       <DiagnosticsModal
         isVisible={showDiagnostics}
         onClose={() => setShowDiagnostics(false)}
-        peerId={peerId}
-        signalingState={signalingState}
-        connectedPeersCount={connectedPeersCount}
-        isCalling={isCalling}
-        messages={messages}
       />
 
-      <InfoModal
-        isVisible={showInfo}
-        onClose={() => setShowInfo(false)}
-      />
-      <IncomingCallModal
-        pendingIncomingCall={pendingIncomingCall}
-        onAccept={handleAcceptIncoming}
-        onReject={handleRejectIncoming}
-      />
+      <InfoModal isVisible={showInfo} onClose={() => setShowInfo(false)} />
+      <IncomingCallModal />
     </div>
   );
 };

@@ -8,26 +8,26 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { formatDuration } from "../utils/helpers";
+import { usePeerStore } from "../store/usePeerStore";
+import { useUIStore } from "../store/useUIStore";
+import { useRoomStore } from "../store/useRoomStore";
+import { useMessageStore } from "../store/useMessageStore";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
   onShowInfo: () => void;
   onShowDiagnostics: () => void;
-  duration: number;
-  peerId: string;
-  createRoom: () => string | null;
-  addMessage: (msg: any) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   onShowInfo,
   onShowDiagnostics,
-  duration,
-  peerId,
-  createRoom,
-  addMessage,
 }) => {
+  const { peerId } = usePeerStore();
+  const { duration } = useUIStore();
+  const { createRoom } = useRoomStore();
+  const { addMessage } = useMessageStore();
   const handleCreateRoom = async () => {
     if (!peerId) {
       addMessage({
