@@ -10,7 +10,17 @@ export const useMediaStream = () => {
 
   const initMedia = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      let stream: MediaStream;
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      } else if ((navigator as any).getUserMedia) {
+        // Fallback for older browsers
+        stream = await new Promise((resolve, reject) => {
+          (navigator as any).getUserMedia({ video: true, audio: true }, resolve, reject);
+        });
+      } else {
+        throw new Error("Media devices not supported. Please use a modern browser.");
+      }
       cameraStreamRef.current = stream;
       setLocalStream(stream);
       return stream;

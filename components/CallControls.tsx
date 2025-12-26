@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Camera,
@@ -11,6 +10,7 @@ import {
   MonitorOff,
   Volume2,
   VolumeX,
+  RefreshCw,
 } from "lucide-react";
 
 interface CallControlsProps {
@@ -27,6 +27,9 @@ interface CallControlsProps {
   onVolumeChange: (volume: number) => void;
   onEndCall: () => void;
   onCall: () => void;
+  // New signaling props
+  signalingState: "unknown" | "ready" | "disconnected" | "closed";
+  onReconnect: () => void;
 }
 
 const CallControls: React.FC<CallControlsProps> = ({
@@ -43,12 +46,14 @@ const CallControls: React.FC<CallControlsProps> = ({
   onVolumeChange,
   onEndCall,
   onCall,
+  signalingState,
+  onReconnect,
 }) => {
   const btnBaseClass =
-    "p-4 rounded-[1.25rem] transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
+    "p-2 md:p-4 rounded-lg md:rounded-[1.25rem] transition-all duration-300 hover:-translate-y-1 active:scale-90 flex items-center justify-center relative group pointer-events-auto";
 
   return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4 px-8 py-5 rounded-[2.5rem] bg-black/40 backdrop-blur-2xl border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] z-[100] transition-transform hover:scale-[1.02]">
+    <div className="fixed bottom-4 md:bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-0.5 md:gap-4 px-2 md:px-8 py-1.5 md:py-5 rounded-lg md:rounded-[2.5rem] bg-black/40 backdrop-blur-2xl border border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] z-[100] transition-transform hover:scale-[1.02] max-w-[85vw] overflow-x-auto">
       <button
         title={isMuted ? "Unmute" : "Mute"}
         onClick={onToggleMute}
@@ -58,8 +63,10 @@ const CallControls: React.FC<CallControlsProps> = ({
             : "bg-white/5 hover:bg-white/10 text-white/80 border border-white/5"
         }`}
       >
-        {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
-        {isMuted && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-zinc-900"></span>}
+        {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+        {isMuted && (
+          <span className="absolute -top-1 -right-1 w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-red-500 rounded-full animate-pulse border-2 border-zinc-900"></span>
+        )}
       </button>
 
       <button
@@ -71,7 +78,7 @@ const CallControls: React.FC<CallControlsProps> = ({
             : "bg-white/5 hover:bg-white/10 text-white/80 border border-white/5"
         }`}
       >
-        {isCameraOff ? <CameraOff size={22} /> : <Camera size={22} />}
+        {isCameraOff ? <CameraOff size={16} /> : <Camera size={16} />}
       </button>
 
       <button
@@ -83,11 +90,11 @@ const CallControls: React.FC<CallControlsProps> = ({
             : "bg-white/5 hover:bg-white/10 text-white/80 border border-white/5"
         }`}
       >
-        {isScreenSharing ? <MonitorOff size={22} /> : <Monitor size={22} />}
+        {isScreenSharing ? <MonitorOff size={16} /> : <Monitor size={16} />}
       </button>
 
       {/* Modern Volume Slider */}
-      <div className="flex items-center gap-4 px-6 py-2.5 bg-white/5 rounded-[1.25rem] border border-white/5 pointer-events-auto group">
+      <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white/5 rounded-lg border border-white/5 pointer-events-auto group">
         <button
           onClick={() => onVolumeChange(remoteVolume === 0 ? 1 : 0)}
           className="text-white/40 group-hover:text-white/80 transition-colors"
@@ -101,35 +108,53 @@ const CallControls: React.FC<CallControlsProps> = ({
           step="0.01"
           value={remoteVolume}
           onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-          className="w-24 h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500 hover:bg-white/20 transition-all"
+          className="w-16 md:w-24 h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500 hover:bg-white/20 transition-all"
           title="Remote Audio Volume"
         />
       </div>
 
-      <div className="w-px h-10 bg-white/10 mx-2" />
+      <div className="w-px h-3 md:h-10 bg-white/10 mx-0.5 md:mx-2" />
+
+      {/* Signaling status */}
+      <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/3 border border-white/5">
+        <span
+          className={`w-2 h-2 rounded-full ${
+            signalingState === 'ready'
+              ? 'bg-green-400'
+              : signalingState === 'disconnected'
+              ? 'bg-yellow-400'
+              : signalingState === 'closed'
+              ? 'bg-red-500'
+              : 'bg-zinc-500'
+          }`}
+          title={`Signaling: ${signalingState}`}
+        ></span>
+        <span className="text-[10px] text-white/70 uppercase tracking-wide">{signalingState}</span>
+        <button onClick={onReconnect} title="Reconnect" className="p-1 ml-1 bg-white/5 rounded-md hover:bg-white/10">
+          <RefreshCw size={14} />
+        </button>
+      </div>
 
       {connectedPeersCount > 0 || isCalling ? (
         <button
           onClick={onEndCall}
-          className="p-4 bg-red-600 hover:bg-red-500 text-white rounded-[1.25rem] shadow-xl shadow-red-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-4 px-10 group pointer-events-auto"
+          className="p-2 md:p-4 bg-red-600 hover:bg-red-500 text-white rounded-lg md:rounded-[1.25rem] shadow-xl shadow-red-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-1 md:gap-4 px-3 md:px-10 group pointer-events-auto"
         >
-          <PhoneOff
-            size={22}
-            className="group-hover:rotate-[20deg] transition-transform"
-          />
-          <span className="font-black text-sm uppercase tracking-widest">End Call</span>
+          <PhoneOff size={16} className="md:w-5 md:h-5" />
+          <span className="font-black text-xs md:text-sm uppercase tracking-widest">
+            End Call
+          </span>
         </button>
       ) : (
         <button
           disabled={remoteIds.length === 0}
           onClick={onCall}
-          className="p-4 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-[1.25rem] shadow-xl shadow-blue-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-4 px-12 group pointer-events-auto"
+          className="p-2 md:p-4 bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white rounded-lg md:rounded-[1.25rem] shadow-xl shadow-blue-600/20 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 flex items-center gap-1 md:gap-4 px-6 md:px-12 group pointer-events-auto"
         >
-          <Phone
-            size={22}
-            className="group-hover:rotate-[20deg] transition-transform"
-          />
-          <span className="font-black text-sm uppercase tracking-widest">Initiate</span>
+          <Phone size={16} className="md:w-5 md:h-5" />
+          <span className="font-black text-xs md:text-sm uppercase tracking-widest">
+            Initiate
+          </span>
         </button>
       )}
     </div>

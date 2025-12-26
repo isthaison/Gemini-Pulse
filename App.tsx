@@ -1,41 +1,79 @@
 import React, { useState, useEffect, useCallback } from "react";
 import VideoGrid from "./components/VideoGrid";
 import CallControls from "./components/CallControls";
-import ChatPanel from "./components/ChatPanel";
-import PeerIdInput from "./components/PeerIdInput";
-import { usePeerConnection } from "./hooks/usePeerConnection";
+import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
+import { InfoModal, DiagnosticsModal, IncomingCallModal } from "./components/Modals";
 import { useMediaStream } from "./hooks/useMediaStream";
-import { ChatMessage, RemotePeer } from "./types";
+import { ChatMessage } from "./types";
 import { formatDuration, copyToClipboard } from "./utils/helpers";
-import { useAppStore } from "./store/appStore";
-import { Sparkles, Info, Clock, ShieldCheck, Activity } from "lucide-react";
+import { usePeerStore } from "./store/usePeerStore";
+import { useCallStore } from "./store/useCallStore";
+import { useChatStore } from "./store/useChatStore";
+import { useRoomStore } from "./store/useRoomStore";
+import { useUIStore } from "./store/useUIStore";
+import { useMessageStore } from "./store/useMessageStore";
+import {
+  Sparkles,
+  Info,
+  Clock,
+  ShieldCheck,
+  Activity,
+  Menu,
+  X,
+} from "lucide-react";
 
 const App: React.FC = () => {
   const {
     peerId,
+    signalingState,
+    initPeer,
+    reconnectPeer,
+    callRefs,
+  } = usePeerStore();
+
+  const {
     remoteIds,
     remotePeers,
     connectedPeersCount,
     isCalling,
-    messages,
-    chatInput,
-    copyFeedback,
-    duration,
-    setPeerId,
+    pendingIncomingCall,
     setRemoteIds,
     addRemoteId,
     removeRemoteId,
-    setRemotePeers,
-    addRemotePeer,
-    removeRemotePeer,
-    setConnectedPeersCount,
+    callPeers,
+    endAllCalls,
+    acceptIncomingCall,
+    rejectIncomingCall,
     setIsCalling,
+  } = useCallStore();
+
+  const {
+    messages,
     addMessage,
+  } = useMessageStore();
+
+  const {
+    chatInput,
+    copyFeedback,
     setChatInput,
     setCopyFeedback,
+    sendMessageToPeers,
+  } = useChatStore();
+
+  const {
+    createRoom,
+  } = useRoomStore();
+
+  const {
+    duration,
     incrementDuration,
     resetDuration,
-  } = useAppStore();
+  } = useUIStore();
+
+  const [showSidebar, setShowSidebar] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
 
   const {
     localStream,
@@ -60,50 +98,44 @@ const App: React.FC = () => {
     }
   };
 
-  const { initPeer, callPeers, endAllCalls, sendMessageToPeers, callRefs } =
-    usePeerConnection({
-      onPeerIdGenerated: setPeerId,
-      // Fix: Correctly handle functional updates from hook to interact with Zustand store
-      onRemotePeersUpdate: useCallback(
-        (updater: (prev: RemotePeer[]) => RemotePeer[]) => {
-          const currentPeers = useAppStore.getState().remotePeers;
-          const nextPeers = updater(currentPeers);
-          setRemoteIds(nextPeers.map((peer) => peer.id));
-          setRemotePeers(nextPeers);
-        },
-        [setRemoteIds, setRemotePeers]
-      ),
-      onConnectedPeersCountChange: useCallback(
-        (updater: (prev: number) => number) => {
-          const currentCount = useAppStore.getState().connectedPeersCount;
-          setConnectedPeersCount(updater(currentCount));
-        },
-        [setConnectedPeersCount]
-      ),
-      onMessageReceived: useCallback(
-        (message, senderId) => {
-          const chatMessage: ChatMessage = {
-            id: Date.now().toString(),
-            content: message,
-            sender: "peer",
-            senderId: senderId,
-            timestamp: new Date(),
-          };
-          addMessage(chatMessage);
-        },
-        [addMessage]
-      ),
-      localStream
-    });
-
   useEffect(() => {
     const initialize = async () => {
       await initMedia();
-      initPeer();
     };
     initialize();
     return () => cleanupMedia();
   }, []);
+
+  useEffect(() => {
+    if (!peerId) {
+      initPeer();
+    }
+  }, [initPeer, peerId]);
+
+  // Incoming call modal
+  useEffect(() => {
+    if (pendingIncomingCall) {
+      // flash sidebar for visibility
+      setShowSidebar(true);
+    }
+  }, [pendingIncomingCall]);
+
+  // Auto-join room if `?room=` present in URL after peer is ready
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get("room");
+    if (room && peerId && room !== peerId) {
+      setRemoteIds([room]);
+      if (localStream) {
+        setIsCalling(true);
+        try {
+          callPeers([room], localStream);
+        } catch (err) {
+          console.error("Auto call error", err);
+        }
+      }
+    }
+  }, [peerId, localStream, setRemoteIds, callPeers, setIsCalling]);
 
   useEffect(() => {
     let interval: any;
@@ -113,11 +145,31 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [connectedPeersCount]);
 
+  // No nickname required — use default/random peer id
+
   const handleCall = async () => {
     if (remoteIds.length > 0 && localStream) {
       setIsCalling(true);
       await callPeers(remoteIds, localStream);
     }
+  };
+
+  const handleAcceptIncoming = async () => {
+    if (!pendingIncomingCall) return;
+    if (!localStream) {
+      console.warn('No local stream to accept call');
+      return;
+    }
+    try {
+      await acceptIncomingCall(pendingIncomingCall, localStream);
+    } catch (err) {
+      console.error('Error accepting incoming call', err);
+    }
+  };
+
+  const handleRejectIncoming = () => {
+    if (!pendingIncomingCall) return;
+    rejectIncomingCall(pendingIncomingCall);
   };
 
   const handleEndCall = () => {
@@ -148,6 +200,8 @@ const App: React.FC = () => {
       .join(". ");
   };
 
+
+
   return (
     <div className="h-screen w-full bg-[#050505] text-white flex flex-col overflow-hidden font-sans selection:bg-blue-500/30">
       {/* Dynamic Background */}
@@ -157,85 +211,74 @@ const App: React.FC = () => {
       </div>
 
       {/* Modern Header */}
-      <header className="relative z-50 px-8 py-4 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-xl">
-        <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-lg shadow-blue-500/20">
-            <Activity className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-              GEMINI <span className="text-blue-500">PULSE</span>
-            </h1>
-            <div className="flex items-center gap-1.5 text-[10px] text-white/40 font-bold uppercase tracking-widest">
-              <ShieldCheck className="w-3 h-3 text-green-500/60" />
-              End-to-End Encrypted
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-6">
-          {duration > 0 && (
-            <div className="flex items-center gap-3 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full">
-              <Clock className="w-4 h-4 text-blue-400" />
-              <span className="text-sm font-mono font-medium tabular-nums">
-                {formatDuration(duration)}
-              </span>
-            </div>
-          )}
-
-          <button
-            onClick={() =>
-              document.getElementById("info-modal")?.classList.remove("hidden")
-            }
-            className="p-2 hover:bg-white/10 rounded-full transition-all text-white/40 hover:text-white"
-          >
-            <Info size={20} />
-          </button>
-        </div>
-      </header>
+      <Header
+        onToggleSidebar={() => setShowSidebar(!showSidebar)}
+        onShowInfo={() => setShowInfo(true)}
+        onShowDiagnostics={() => setShowDiagnostics(true)}
+        duration={duration}
+        peerId={peerId}
+        createRoom={createRoom}
+        addMessage={addMessage}
+      />
 
       {/* Main Grid Layout */}
-      <main className="flex-1 flex p-6 gap-6 overflow-hidden relative z-10">
+      <main className="flex-1 flex flex-col md:flex-row p-4 md:p-6 gap-4 md:gap-6 overflow-hidden relative z-10">
         {/* Left: Video Stage */}
-        <div className="flex-1 flex flex-col gap-6 h-full">
-          <div className="flex-1 min-h-0 bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden relative group">
-            <VideoGrid
-              localStream={localStream}
-              remotePeers={remotePeers}
-              isScreenSharing={isScreenSharing}
-            />
-          </div>
+        <div className="flex-1 flex flex-col gap-4 md:gap-6 h-full min-h-0">
+          <VideoGrid
+            localStream={localStream}
+            remotePeers={remotePeers}
+            isScreenSharing={isScreenSharing}
+          />
         </div>
 
-        {/* Right: Sidebar Interaction */}
-        <div className="w-[400px] flex flex-col gap-6 h-full">
-          {/* Peer Management Area */}
-          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl backdrop-blur-md">
-            <PeerIdInput
-              peerId={peerId}
-              remoteIds={remoteIds}
-              copyFeedback={copyFeedback}
-              onAddPeerId={addRemoteId}
-              onRemovePeerId={removeRemoteId}
-              onCopyPeerId={handleCopyPeerId}
-              onRemoteIdsChange={setRemoteIds}
-            />
-          </div>
-
-          {/* Chat & AI Hub */}
-          <div className="flex-1 min-h-0 flex flex-col bg-white/[0.02] border border-white/5 rounded-3xl backdrop-blur-md overflow-hidden">
-            <ChatPanel
-              messages={messages}
-              chatInput={chatInput}
-              onChatInputChange={setChatInput}
-              onSendMessage={handleSendMessage}
-            />
-          </div>
+        {/* Right: Sidebar Interaction - Desktop */}
+        <div className="hidden md:flex w-[400px]">
+          <Sidebar
+            peerId={peerId}
+            remoteIds={remoteIds}
+            messages={messages}
+            chatInput={chatInput}
+            copyFeedback={copyFeedback}
+            onRemoteIdsChange={setRemoteIds}
+            onAddPeerId={addRemoteId}
+            onRemovePeerId={removeRemoteId}
+            onCopyPeerId={handleCopyPeerId}
+            onChatInputChange={setChatInput}
+            onSendMessage={handleSendMessage}
+          />
         </div>
       </main>
 
+      {/* Mobile Bottom Sheet */}
+      <div
+        className={`md:hidden fixed inset-x-0 bottom-0 bg-black/90 backdrop-blur-xl z-40 transform transition-transform duration-300 rounded-t-3xl ${
+          showSidebar ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        {/* Drag Handle */}
+        <div className="flex justify-center py-3">
+          <div className="w-12 h-1.5 bg-white/20 rounded-full"></div>
+        </div>
+        <div className="max-h-[65vh] overflow-y-auto px-4 pb-4">
+          <Sidebar
+            peerId={peerId}
+            remoteIds={remoteIds}
+            messages={messages}
+            chatInput={chatInput}
+            copyFeedback={copyFeedback}
+            onRemoteIdsChange={setRemoteIds}
+            onAddPeerId={addRemoteId}
+            onRemovePeerId={removeRemoteId}
+            onCopyPeerId={handleCopyPeerId}
+            onChatInputChange={setChatInput}
+            onSendMessage={handleSendMessage}
+          />
+        </div>
+      </div>
+
       {/* Universal Controls Bar */}
-      <footer className="relative z-50 py-8 pointer-events-none">
+      <footer className="relative z-50 py-4 md:py-8 px-4 md:px-0 pointer-events-none">
         <CallControls
           isCalling={isCalling}
           connectedPeersCount={connectedPeersCount}
@@ -250,45 +293,32 @@ const App: React.FC = () => {
           onToggleCamera={toggleCamera}
           onToggleScreenShare={() => toggleScreenShare(callRefs)}
           onVolumeChange={setRemoteVolume}
+          signalingState={signalingState}
+          onReconnect={() => reconnectPeer()}
         />
       </footer>
 
-      {/* Improved Info Modal */}
-      <div
-        id="info-modal"
-        className="hidden fixed inset-0 bg-black/80 backdrop-blur-xl z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300"
-      >
-        <div className="bg-zinc-900 border border-white/10 rounded-[2.5rem] p-10 max-w-lg w-full shadow-2xl">
-          <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-6">
-            <Sparkles className="w-8 h-8 text-blue-500" />
-          </div>
-          <h3 className="text-3xl font-bold mb-4 tracking-tight">
-            Meeting Intelligence
-          </h3>
-          <p className="text-zinc-400 text-lg leading-relaxed mb-8">
-            Video Pulse leverages P2P WebRTC technology for ultra-low latency
-            communication and Google Gemini for real-time meeting insights.
-          </p>
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-              <div className="text-white font-bold">Privacy</div>
-              <div className="text-zinc-500 text-sm">Peer-to-peer data</div>
-            </div>
-            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-              <div className="text-white font-bold">AI Driven</div>
-              <div className="text-zinc-500 text-sm">Gemini 3.0 Flash</div>
-            </div>
-          </div>
-          <button
-            onClick={() =>
-              document.getElementById("info-modal")?.classList.add("hidden")
-            }
-            className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:bg-zinc-200 transition-colors"
-          >
-            Got it, thanks!
-          </button>
-        </div>
-      </div>
+      {/* Nickname removed: using default/random peer id */}
+
+      <DiagnosticsModal
+        isVisible={showDiagnostics}
+        onClose={() => setShowDiagnostics(false)}
+        peerId={peerId}
+        signalingState={signalingState}
+        connectedPeersCount={connectedPeersCount}
+        isCalling={isCalling}
+        messages={messages}
+      />
+
+      <InfoModal
+        isVisible={showInfo}
+        onClose={() => setShowInfo(false)}
+      />
+      <IncomingCallModal
+        pendingIncomingCall={pendingIncomingCall}
+        onAccept={handleAcceptIncoming}
+        onReject={handleRejectIncoming}
+      />
     </div>
   );
 };

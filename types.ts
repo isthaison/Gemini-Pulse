@@ -17,7 +17,7 @@ export interface MeetingState {
 
 export interface ChatMessage {
   id: string;
-  sender: 'self' | 'peer';
+  sender: 'self' | 'peer' | 'system';
   senderId?: string; // For identifying which peer sent the message
   content: string;
   timestamp: Date;
