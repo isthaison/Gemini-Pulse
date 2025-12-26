@@ -546,26 +546,5 @@ export const useMicrophoneStore = create<MicrophoneState>((set, get) => {
         },
       });
     },
-
-    refreshAudioDevices: async () => {
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-          console.warn("enumerateDevices not supported");
-          return;
-        }
-
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioDevices = devices.filter(d => d.kind === 'audioinput');
-        set({ availableAudioDevices: audioDevices });
-
-        // Auto-select device if not already selected
-        const { selectedAudioDevice } = get();
-        if (!selectedAudioDevice && audioDevices.length > 0) {
-          set({ selectedAudioDevice: audioDevices[0].deviceId });
-        }
-      } catch (err) {
-        console.error("Failed to refresh audio devices:", err);
-      }
-    },
   };
 });

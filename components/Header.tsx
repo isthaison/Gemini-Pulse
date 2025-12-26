@@ -56,11 +56,11 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <header className="relative z-50 px-4 md:px-8 py-4 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur-xl">
       <div className="flex items-center gap-2 md:gap-4">
-        <div className="p-2 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-lg shadow-blue-500/20 md:p-2.5">
+        <div className="p-2 bg-linear-to-br from-blue-600 to-indigo-700 rounded-xl shadow-lg shadow-blue-500/20 md:p-2.5">
           <Activity className="w-4 h-4 md:w-5 md:h-5 text-white" />
         </div>
         <div>
-          <h1 className="text-base md:text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+          <h1 className="text-base md:text-lg font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-white to-white/60">
             GEMINI <span className="text-blue-500">PULSE</span>
           </h1>
           <div className="flex items-center gap-1 text-[9px] md:text-[10px] text-white/40 font-bold uppercase tracking-widest">
